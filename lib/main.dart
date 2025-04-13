@@ -1,23 +1,18 @@
-import 'package:flutter/foundation.dart'; // for kIsWeb
-import 'dart:io' show Platform; // keep this for mobile platforms
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
+import 'package:mindful_alarm_app/bloc/alarm_event.dart';
+import 'package:mindful_alarm_app/bloc/alarm_state.dart';
 
 import 'bloc/alarm_bloc.dart';
-import 'bloc/alarm_event.dart';
-import 'bloc/alarm_state.dart';
-import 'alarm_service.dart';
+import 'services/alarm_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  if (!kIsWeb && Platform.isAndroid) {
-    await AndroidAlarmManager.initialize();
-    await initializeNotifications();
-  }
+  await AndroidAlarmManager.initialize();
+  await initializeNotifications();
 
-  runApp(MyApp());
+  runApp(BlocProvider(create: (_) => AlarmBloc(), child: const MyApp()));
 }
 
 class MyApp extends StatelessWidget {
@@ -25,26 +20,23 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) => AlarmBloc(),
-      child: MaterialApp(
-        title: 'Mindful Alarm Bloc',
-        theme: ThemeData(primarySwatch: Colors.teal),
-        home: AlarmPage(),
-        debugShowCheckedModeBanner: false,
-      ),
+    return MaterialApp(
+      title: 'Mindful Alarm',
+      theme: ThemeData(primarySwatch: Colors.indigo),
+      home: const AlarmPage(),
+      debugShowCheckedModeBanner: false,
     );
   }
 }
 
 class AlarmPage extends StatelessWidget {
-  // Pick alarm time
+  const AlarmPage({super.key});
+
   Future<void> _pickTime(BuildContext context) async {
-    final TimeOfDay? picked = await showTimePicker(
+    final picked = await showTimePicker(
       context: context,
       initialTime: TimeOfDay.now(),
     );
-
     if (picked != null) {
       final now = DateTime.now();
       final alarmTime = DateTime(
@@ -54,93 +46,52 @@ class AlarmPage extends StatelessWidget {
         picked.hour,
         picked.minute,
       );
-
-      if (alarmTime.isAfter(now)) {
-        context.read<AlarmBloc>().add(SetAlarmEvent(alarmTime));
-      } else {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text("Please choose a future time")));
+      if (alarmTime.isBefore(now)) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please select a future time')),
+        );
+        return;
       }
-    }
-  }
-
-  // Cancel alarm
-  void _cancelAlarm(BuildContext context) {
-    context.read<AlarmBloc>().add(CancelAlarmEvent());
-  }
-
-  // Stream to show current time
-  Stream<DateTime> tick() async* {
-    while (true) {
-      await Future.delayed(Duration(seconds: 1));
-      yield DateTime.now();
+      context.read<AlarmBloc>().add(SetAlarmEvent(alarmTime));
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Mindful Alarm Bloc')),
-      body: BlocListener<AlarmBloc, AlarmState>(
-        listener: (context, state) {
-          if (state.alarmTime != null) {
-            final formattedTime = TimeOfDay.fromDateTime(
-              state.alarmTime!,
-            ).format(context);
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text("Alarm set for $formattedTime")),
-            );
-          } else {
-            ScaffoldMessenger.of(
-              context,
-            ).showSnackBar(SnackBar(content: Text("Alarm canceled")));
-          }
-        },
-        child: Center(
-          child: BlocBuilder<AlarmBloc, AlarmState>(
-            builder: (context, state) {
-              return Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // Current Time StreamBuilder
-                  StreamBuilder<DateTime>(
-                    stream: tick(),
-                    builder: (context, snapshot) {
-                      if (!snapshot.hasData) return CircularProgressIndicator();
-                      final now = snapshot.data!;
-                      final formatted = TimeOfDay.fromDateTime(
-                        now,
-                      ).format(context);
-                      return Text(
-                        "⏰ Current Time: $formatted",
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      );
-                    },
-                  ),
-                  SizedBox(height: 30),
-                  // Set alarm button
+      appBar: AppBar(title: const Text("Mindful Alarm")),
+      body: BlocBuilder<AlarmBloc, AlarmState>(
+        builder: (context, state) {
+          return Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  state.alarmTime == null
+                      ? "No alarm set"
+                      : "Alarm: ${TimeOfDay.fromDateTime(state.alarmTime!).format(context)}",
+                  style: const TextStyle(fontSize: 20),
+                ),
+                const SizedBox(height: 20),
+                ElevatedButton(
+                  onPressed: () => _pickTime(context),
+                  child: const Text("Set Alarm"),
+                ),
+                if (state.alarmTime != null) ...[
+                  const SizedBox(height: 10),
                   ElevatedButton(
-                    onPressed: () => _pickTime(context),
-                    child: Text("Set Mindful Alarm"),
-                  ),
-                  // Cancel alarm button
-                  if (state.alarmTime != null)
-                    ElevatedButton(
-                      onPressed: () => _cancelAlarm(context),
-                      child: Text("Cancel Alarm"),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.redAccent,
-                      ),
+                    onPressed:
+                        () => context.read<AlarmBloc>().add(CancelAlarmEvent()),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red,
                     ),
+                    child: const Text("Cancel Alarm"),
+                  ),
                 ],
-              );
-            },
-          ),
-        ),
+              ],
+            ),
+          );
+        },
       ),
     );
   }

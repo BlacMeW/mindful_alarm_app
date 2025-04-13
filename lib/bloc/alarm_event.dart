@@ -1,9 +1,20 @@
-abstract class AlarmEvent {}
+import 'package:equatable/equatable.dart';
 
-class SetAlarmEvent extends AlarmEvent {
-  final DateTime alarmTime;
-
-  SetAlarmEvent(this.alarmTime);
+abstract class AlarmEvent extends Equatable {
+  const AlarmEvent();
 }
 
-class CancelAlarmEvent extends AlarmEvent {}
+class SetAlarmEvent extends AlarmEvent {
+  final DateTime time;
+  const SetAlarmEvent(this.time);
+
+  @override
+  List<Object> get props => [time];
+}
+
+class CancelAlarmEvent extends AlarmEvent {
+  const CancelAlarmEvent();
+
+  @override
+  List<Object> get props => [];
+}

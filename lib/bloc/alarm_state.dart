@@ -1,9 +1,10 @@
-class AlarmState {
+import 'package:equatable/equatable.dart';
+
+class AlarmState extends Equatable {
   final DateTime? alarmTime;
 
-  AlarmState({this.alarmTime});
+  const AlarmState({this.alarmTime});
 
-  AlarmState copyWith({DateTime? alarmTime}) {
-    return AlarmState(alarmTime: alarmTime ?? this.alarmTime);
-  }
+  @override
+  List<Object?> get props => [alarmTime];
 }
