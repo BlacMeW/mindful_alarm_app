@@ -1,20 +1,13 @@
-import 'package:equatable/equatable.dart';
+part of 'alarm_bloc.dart';
 
 abstract class AlarmEvent extends Equatable {
   const AlarmEvent();
 }
 
 class SetAlarmEvent extends AlarmEvent {
-  final DateTime time;
-  const SetAlarmEvent(this.time);
+  final DateTime dateTime;
+  const SetAlarmEvent(this.dateTime);
 
   @override
-  List<Object> get props => [time];
-}
-
-class CancelAlarmEvent extends AlarmEvent {
-  const CancelAlarmEvent();
-
-  @override
-  List<Object> get props => [];
+  List<Object> get props => [dateTime];
 }
