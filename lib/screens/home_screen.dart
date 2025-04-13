@@ -49,7 +49,7 @@ class HomeScreen extends StatelessWidget {
             ),
             const SizedBox(height: 10),
             ElevatedButton(
-              onPressed: () => RingtoneUtils.playRingtone(),
+              onPressed: () => RingtoneUtils.playRingtoneOnce(),
               child: const Text('Test Ringtone'),
             ),
             const SizedBox(height: 10),

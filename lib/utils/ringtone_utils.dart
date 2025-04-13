@@ -9,6 +9,14 @@ class RingtoneUtils {
     );
   }
 
+  static void playRingtoneOnce() {
+    FlutterRingtonePlayer().playAlarm(
+      asAlarm: true,
+      looping: false,
+      volume: 1.0,
+    );
+  }
+
   static void stopRingtone() {
     FlutterRingtonePlayer().stop();
   }
