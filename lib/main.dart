@@ -38,8 +38,7 @@ class MyApp extends StatelessWidget {
 }
 
 class AlarmPage extends StatelessWidget {
-  const AlarmPage({super.key});
-
+  // Pick alarm time
   Future<void> _pickTime(BuildContext context) async {
     final TimeOfDay? picked = await showTimePicker(
       context: context,
@@ -66,8 +65,17 @@ class AlarmPage extends StatelessWidget {
     }
   }
 
+  // Cancel alarm
   void _cancelAlarm(BuildContext context) {
     context.read<AlarmBloc>().add(CancelAlarmEvent());
+  }
+
+  // Stream to show current time
+  Stream<DateTime> tick() async* {
+    while (true) {
+      await Future.delayed(Duration(seconds: 1));
+      yield DateTime.now();
+    }
   }
 
   @override
@@ -95,18 +103,31 @@ class AlarmPage extends StatelessWidget {
               return Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text(
-                    state.alarmTime == null
-                        ? "No alarm set"
-                        : "Alarm set for: ${TimeOfDay.fromDateTime(state.alarmTime!).format(context)}",
-                    style: TextStyle(fontSize: 18),
+                  // Current Time StreamBuilder
+                  StreamBuilder<DateTime>(
+                    stream: tick(),
+                    builder: (context, snapshot) {
+                      if (!snapshot.hasData) return CircularProgressIndicator();
+                      final now = snapshot.data!;
+                      final formatted = TimeOfDay.fromDateTime(
+                        now,
+                      ).format(context);
+                      return Text(
+                        "⏰ Current Time: $formatted",
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      );
+                    },
                   ),
-                  SizedBox(height: 20),
+                  SizedBox(height: 30),
+                  // Set alarm button
                   ElevatedButton(
                     onPressed: () => _pickTime(context),
                     child: Text("Set Mindful Alarm"),
                   ),
-                  SizedBox(height: 10),
+                  // Cancel alarm button
                   if (state.alarmTime != null)
                     ElevatedButton(
                       onPressed: () => _cancelAlarm(context),
