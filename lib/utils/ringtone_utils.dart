@@ -9,15 +9,22 @@ class RingtoneUtils {
     );
   }
 
+  static Future<void> delayRingtoneStop() async {
+    await Future.delayed(Duration(seconds: 20));
+  }
+
   static void playRingtoneOnce() {
     FlutterRingtonePlayer().playAlarm(
-      asAlarm: true,
+      asAlarm: false,
       looping: false,
       volume: 1.0,
     );
+
+    // FlutterRingtonePlayer().stop();
   }
 
   static void stopRingtone() {
+    delayRingtoneStop();
     FlutterRingtonePlayer().stop();
   }
 }

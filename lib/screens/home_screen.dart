@@ -53,6 +53,11 @@ class HomeScreen extends StatelessWidget {
               child: const Text('Test Ringtone'),
             ),
             const SizedBox(height: 10),
+            ElevatedButton(
+              onPressed: () => RingtoneUtils.stopRingtone(),
+              child: const Text('Stop Ringtone'),
+            ),
+            const SizedBox(height: 10),
             TimePickerButton(),
           ],
         ),
